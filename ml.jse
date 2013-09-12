@@ -1,0 +1,58 @@
+var sh = new ActiveXObject("WScript.Shell");
+var ie = new ActiveXObject('InternetExplorer.Application');
+ie.visible=true;
+
+var er = false;
+var ln = 0;
+var fs = new ActiveXObject('Scripting.FileSystemObject');
+var tf = fs.OpenTextFile('./ozamasa.txt',1);
+var tl = fs.OpenTextFile('./ozamasa.log',2,true);
+while( !tf.AtEndOfStream ){
+    ln++;
+         if(ln < 10    ){ls=ln + "    ";}
+    else if(ln < 100   ){ls=ln + "   "; }
+    else if(ln < 1000  ){ls=ln + "  ";  }
+    else if(ln < 10000 ){ls=ln + " ";   }
+    else                {ls=ln + "";    }
+    var te = tf.readLine();
+    var spos = te.indexOf('http:');
+    if(spos >= 0){
+        var epos = te.length;
+        var sstr;
+        sstr = '@';  if( te.indexOf(sstr,spos) >= 0 ){ epos = te.indexOf(sstr,spos); };
+        sstr = ' ';   if( te.indexOf(sstr,spos) >= 0 ){ epos = te.indexOf(sstr,spos); };
+        sstr = '"';   if( te.indexOf(sstr,spos) >= 0 ){ epos = te.indexOf(sstr,spos); };
+        var urls = te.substring(spos,epos);
+        if( urls.indexOf('http:'          ) >= 0 &&
+            (
+            urls.indexOf('?'              ) >= 0 ||
+            urls.indexOf('&'              ) >= 0
+            )
+          )
+        {
+            try{
+                ie.Navigate(urls);
+                var from = (new Date()).getTime();
+                while (ie.Busy || ie.ReadyState != 4) {
+                    WScript.Sleep(100);
+                    var toto = (new Date()).getTime();
+                    if ( (toto - from) > 10000 ){ break; }
+                }
+                tl.WriteLine(ls + "[OK]" + urls + "\t" + ((new Date()).getTime() - from) + "\t" + te);
+            }catch(e){
+                tl.WriteLine(ls + "[ER]" + urls + "\t" + te);
+                er = true;
+            }
+        }else{
+            if( urls.indexOf('http') >= 0 ){
+                tl.WriteLine(ls + "[NA]" + urls + "\t" + te);
+            }
+        }
+    }
+}
+
+tl.Close();
+tf.Close();
+var msg = "Finish!!!";
+if(er) msg += "\nbut Error!";
+sh.Popup(msg, 0, "Finish", 1);

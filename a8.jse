@@ -1,0 +1,50 @@
+var sh = new ActiveXObject("WScript.Shell");
+var ie = new ActiveXObject('InternetExplorer.Application');
+ie.visible=true;
+
+var er = false;
+var fs = new ActiveXObject('Scripting.FileSystemObject');
+var tf = fs.OpenTextFile('./ozamasa.csv',1);
+var tl = fs.OpenTextFile('./ozamasa.log',2,true);
+while( !tf.AtEndOfStream ){
+    var ta = tf.readLine();
+
+    var te = "";
+    var urls = "http://www.aaaa.com";
+    try{
+        ie.Navigate(urls);
+        var from = (new Date()).getTime();
+        while (ie.Busy || ie.ReadyState != 4) {
+            WScript.Sleep(1000);
+            var toto = (new Date()).getTime();
+            if ( (toto - from) > 50000 ){ break; }
+        }
+        te = ie.Document.all.material_1.code.value;
+    }catch(e){
+    }
+
+    if(te != ""){
+        var spos = te.indexOf('http:');
+        var epos = spos + 56; //te.length;
+        var epos2 = epos;
+        var sstr;
+        sstr = ' ' ;  if( epos2 == epos && te.indexOf(sstr,spos) >= 0 ){ epos2 = te.indexOf(sstr,spos); };
+        sstr = '@';  if( epos2 == epos && te.indexOf(sstr,spos) >= 0 ){ epos2 = te.indexOf(sstr,spos); };
+        sstr = '"' ;  if( epos2 == epos && te.indexOf(sstr,spos) >= 0 ){ epos2 = te.indexOf(sstr,spos); };
+        sstr = '\r';  if( epos2 == epos && te.indexOf(sstr,spos) >= 0 ){ epos2 = te.indexOf(sstr,spos); };
+        sstr = '\n';  if( epos2 == epos && te.indexOf(sstr,spos) >= 0 ){ epos2 = te.indexOf(sstr,spos); };
+        sstr = '\t';  if( epos2 == epos && te.indexOf(sstr,spos) >= 0 ){ epos2 = te.indexOf(sstr,spos); };
+        if( epos2 != epos ){ epos = epos2; }
+        var urls = te.substring(spos,epos);
+        try{
+            tl.WriteLine("\t\tal.add(\"" + urls + "\");\t// " + ta);
+        }catch(e){
+        }
+    }
+}
+
+tl.Close();
+tf.Close();
+var msg = "Finish!!!";
+if(er) msg += "\nbut Error!";
+sh.Popup(msg, 0, "Finish", 1);
